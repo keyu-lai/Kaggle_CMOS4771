@@ -67,7 +67,7 @@ if __name__ == '__main__':
 	training_set, training_labels = get_data('data.csv', numeric_fields, idx_to_field)
 	# test_set, _ = get_data('quiz.csv', numeric_fields, idx_to_field)
 
-	sep = int(len(training_set) * 0.9)
+	sep = int(len(training_set) * 0.6)
 	test_set = training_set[sep:]
 	test_labels = training_labels[sep:]
 	training_set = training_set[:sep]
@@ -79,13 +79,16 @@ if __name__ == '__main__':
 	test_X = v.transform(test_set).toarray()
 	test_y = test_labels
 
-	classifer = SVC()
-	classifer.fit(training_X, training_y)
-	res = classifer.predict(test_X).tolist()
-	count = 0
-	for i in range(len(res)):
-		if res[i] == test_y[i]:
-			count += 1
-	print float(count) / len(res)
+	g = 1.0 / 8
+	for k in range(10):
+		classifer = SVC(gamma=g)
+		classifer.fit(training_X, training_y)
+		res = classifer.predict(test_X).tolist()
+		count = 0
+		for i in range(len(res)):
+			if res[i] == test_y[i]:
+				count += 1
+		print str(g) + ": " + str(float(count) / len(res))
+		g *= 2
 
 
