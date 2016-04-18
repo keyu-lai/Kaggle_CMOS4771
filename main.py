@@ -1,6 +1,6 @@
 import csv
 from sklearn.feature_extraction import DictVectorizer
-from sklearn.svm import LinearSVC
+from sklearn.svm import SVC
 import numpy as np
 
 def get_data(filename, numeric_fields, idx_to_field):
@@ -67,17 +67,19 @@ if __name__ == '__main__':
 	training_set, training_labels = get_data('data.csv', numeric_fields, idx_to_field)
 	# test_set, _ = get_data('quiz.csv', numeric_fields, idx_to_field)
 
-	sep = int(len(training_set) * 0.8)
+	sep = int(len(training_set) * 0.9)
 	test_set = training_set[sep:]
 	test_labels = training_labels[sep:]
 	training_set = training_set[:sep]
 	training_labels = training_labels[:sep]
 	v = DictVectorizer()
+
 	training_X = v.fit_transform(training_set).toarray()
 	training_y = np.array(training_labels)
 	test_X = v.transform(test_set).toarray()
 	test_y = test_labels
-	classifer = LinearSVC()
+
+	classifer = SVC()
 	classifer.fit(training_X, training_y)
 	res = classifer.predict(test_X).tolist()
 	count = 0
