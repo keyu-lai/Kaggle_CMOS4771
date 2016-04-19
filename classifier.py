@@ -43,27 +43,19 @@ from sklearn.svm import SVC
 from sklearn.metrics import precision_score, recall_score, accuracy_score
 from sklearn.preprocessing import scale
 
-def split_dataframe(df):
-    x1 = df['description_x']
-    x2 = df['description_y']
-    y_train = df['same_security']
-    return [x1,x2,y_train]
-
-def prepare_data_ed(dataset,vec):
-    v1 = vec.transform(dataset[0]).todense()
-    v2 = vec.transform(dataset[1]).todense()
-    dist_train = [ed(x,y)[0].tolist() for (x, y) in zip(v1,v2)]
+def encode_onehot(df, cols):
+    vec = DictVectorizer()
     
-    return [dist_train,dataset[2]]
-
-def prepare_data_diff(dataset,vec):
-    v1 = vec.transform(dataset[0]).todense()
-    v2 = vec.transform(dataset[1]).todense()
+    vec_data = pd.DataFrame(vec.fit_transform(df[cols].to_dict(orient='records')).toarray())
+    vec_data.columns = vec.get_feature_names()
+    vec_data.index = df.index
     
-    return [abs(v1-v2),dataset[2]]
+    df = df.drop(cols, axis=1)
+    df = df.join(vec_data)
+    return df
 
 def train_svm(train_data,train_label):
-    pipeline = Pipeline([('clf', SVC(kernel='rbf', gamma=0.01, C=100))])
+    pipeline = Pipeline([('clf', SVC(gamma=0.01, C=100))])
     parameters = {'clf__gamma': (0.01, 0.03, 0.1, 0.3, 1),'clf__C': (0.1, 0.3, 1, 3, 10, 30),}
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=2,verbose=1, scoring='accuracy')
     grid_search.fit(train_data, train_label)
