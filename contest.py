@@ -1,0 +1,99 @@
+import pandas as pd
+import numpy
+
+from sklearn.ensemble import GradientBoostingClassifier, ExtraTreesClassifier, VotingClassifier, RandomForestClassifier, AdaBoostClassifier, BaggingClassifier, BaggingClassifier
+from sklearn.linear_model import SGDClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import classification_report
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.cross_validation import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+
+from classifier import blend_clf, write_out, encode_label
+
+def prepare_data(df):
+    df4 = df
+    df1 = pd.DataFrame(df.loc[:,[u'0',u'5',u'7',u'8',u'9',u'14',u'16',u'17',u'56',u'57']])
+    #0 , 26 8, 5 , 14, 23 , 58 -> boss
+    #17, 56, 16,9,, 25, 57 -> yes
+    #20, 18, 7 -> no
+    #df2 = pd.DataFrame(df.loc[:,[u'18',u'20',u'23',u'25',u'26']])
+    df2 = pd.DataFrame(df.loc[:,[u'18',u'20',u'23',u'25',u'26',u'58']])
+    df3 = pd.DataFrame(df.drop([u'0',u'5',u'7',u'8',u'9',u'14',u'16',u'17',
+                          u'18',u'20',u'23',u'25',u'26',u'56',u'57',u'58'],axis=1))
+    
+    return df1, df2, df3, df4
+
+def encode(dataset):
+    drop_cols = []
+    for i in dataset.columns:
+        if isinstance(dataset[i].values[0], basestring):
+            drop_cols = drop_cols + [i]
+    
+    return encode_label(dataset, drop_cols)
+
+def encode_with_test(train, test):
+    agg_data = pd.concat([train, test],axis=0,ignore_index=True)
+    agg_data= encode(agg_data)
+    
+    return agg_data._slice(slice(0,train.shape[0]),axis=0), agg_data._slice(slice(train.shape[0],agg_data.shape[0]),axis=0)
+
+
+def run_local():
+    train = pd.read_csv('data.csv')
+    label = train['label']
+    train = train.drop('label',1)
+    train = encode(train)
+    X_train, X_test, y_train, y_test = train_test_split(train, label)
+
+    clfs = [RandomForestClassifier(n_estimators=1000, n_jobs=-1, criterion='gini', random_state=398),
+        RandomForestClassifier(n_estimators=1000, n_jobs=-1, criterion='entropy', random_state=1234),
+        ExtraTreesClassifier(n_estimators=1000, n_jobs=-1, criterion='gini', max_features='sqrt', random_state=312),
+        ExtraTreesClassifier(n_estimators=1000, n_jobs=-1, criterion='entropy', max_features='log2', random_state=12),
+        GradientBoostingClassifier(learning_rate=0.1, subsample=0.5, max_depth=6, n_estimators=50),
+        AdaBoostClassifier(n_estimators=50, learning_rate=0.4),
+        AdaBoostClassifier(n_estimators=50, learning_rate=0.3),
+        BaggingClassifier(DecisionTreeClassifier(), n_jobs=-1,random_state=851,n_estimators=100),
+        BaggingClassifier(DecisionTreeClassifier(), n_jobs=-1,random_state=1556,n_estimators=100),
+        DecisionTreeClassifier(criterion='entropy',splitter='best'),
+        KNeighborsClassifier(n_neighbors=3)]
+
+
+    predictions = blend_clf(clfs, X_train.as_matrix(),X_test.as_matrix(),y_train.as_matrix())
+    print classification_report(y_test1, predictions,digits=4)
+    
+    return None
+    
+def score():
+    train = pd.read_csv('data.csv')
+    label = train['label']
+    train = train.drop('label',1)
+    quiz = pd.read_csv('quiz.csv')
+    
+    agg_data = pd.concat([train, quiz],axis=0,ignore_index=True)
+    agg_data = encode(agg_data)
+    train = agg_data._slice(slice(0,train.shape[0]),0)
+    quiz = agg_data._slice(slice(train.shape[0],agg_data.shape[0]),0)
+
+    X_train, X_test, y_train = train, quiz, label
+
+    clfs = [RandomForestClassifier(n_estimators=1000, n_jobs=-1, criterion='gini', random_state=398),
+        RandomForestClassifier(n_estimators=1000, n_jobs=-1, criterion='entropy', random_state=1234),
+        ExtraTreesClassifier(n_estimators=1000, n_jobs=-1, criterion='gini', max_features='sqrt', random_state=312),
+        ExtraTreesClassifier(n_estimators=1000, n_jobs=-1, criterion='entropy', max_features='log2', random_state=12),
+        GradientBoostingClassifier(learning_rate=0.1, subsample=0.5, max_depth=6, n_estimators=50),
+        AdaBoostClassifier(n_estimators=50, learning_rate=0.4),
+        AdaBoostClassifier(n_estimators=50, learning_rate=0.3),
+        BaggingClassifier(DecisionTreeClassifier(), n_jobs=-1,random_state=851,n_estimators=100),
+        BaggingClassifier(DecisionTreeClassifier(), n_jobs=-1,random_state=1556,n_estimators=100),
+        DecisionTreeClassifier(criterion='entropy',splitter='best'),
+        KNeighborsClassifier(n_neighbors=3)]
+
+
+    predictions = blend_clf(clfs, X_train.as_matrix(),X_test.as_matrix(),y_train.as_matrix())
+    write_out(predictions,"9stack.txt")
+    
+    return None
+
+if __name__ == "__main__":
+    run_local()

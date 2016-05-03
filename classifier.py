@@ -33,8 +33,7 @@ from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.linear_model import LogisticRegression
-
-import xgboost as xgb
+from sklearn.preprocessing import LabelEncoder
 
 def transform_corpus(train):
     corpus = []
@@ -59,6 +58,15 @@ def encode_onehot(df, cols):
     
     df = df.drop(cols, axis=1)
     df = df.join(vec_data)
+    return df
+
+def encode_label(df, cols):
+    le = LabelEncoder()
+    
+    for c in cols:
+        le.fit(df[c].unique())
+        df[c] = le.transform(df[c])
+    
     return df
 
 def train_svm(train_data,train_label):
@@ -246,68 +254,14 @@ def write_out(pv,filename):
     f.write('\n'.join(output))
     f.close()
 
-    
-def blend(train, test, label):
-    np.random.seed(0) # seed to shuffle the train set
-
-    n_folds = 10
-    verbose = True
-    shuffle = False
-
-    X, y, X_submission = train, label, test
-
-    if shuffle:
-        idx = np.random.permutation(y.size)
-        X = X[idx]
-        y = y[idx]
-
-    skf = list(StratifiedKFold(y, n_folds))
-
-    clfs = [RandomForestClassifier(n_estimators=50, n_jobs=-1, criterion='gini'),
-            RandomForestClassifier(n_estimators=50, n_jobs=-1, criterion='entropy'),
-            ExtraTreesClassifier(n_estimators=50, n_jobs=-1, criterion='gini'),
-            ExtraTreesClassifier(n_estimators=50, n_jobs=-1, criterion='entropy'),
-            GradientBoostingClassifier(learning_rate=0.05, subsample=0.5, max_depth=6, n_estimators=10)]
-
-    print "Creating train and test sets for blending."
-    
-    dataset_blend_train = np.zeros((X.shape[0], len(clfs)))
-    dataset_blend_test = np.zeros((X_submission.shape[0], len(clfs)))
-    
-    for j, clf in enumerate(clfs):
-        print j, clf
-        dataset_blend_test_j = np.zeros((X_submission.shape[0], len(skf)))
-        for i, (train, test) in enumerate(skf):
-            print "Fold", i
-            X_train = X[train]
-            y_train = y[train]
-            X_test = X[test]
-            y_test = y[test]
-            clf.fit(X_train, y_train)
-            y_submission = clf.predict_proba(X_test)[:,1]
-            dataset_blend_train[test, j] = y_submission
-            dataset_blend_test_j[:, i] = clf.predict_proba(X_submission)[:,1]
-        dataset_blend_test[:,j] = dataset_blend_test_j.mean(1)
-
-    print "Blending."
-    clf = LogisticRegression()
-    clf.fit(dataset_blend_train, y)
-    y_submission = clf.predict_proba(dataset_blend_test)[:,1]
-    y_submission = np.rint(y_submission)
-    y_submission[y_submission == 0] = -1
-    np.savetxt(fname='test.csv', X=y_submission, fmt='%0.9f')
-    
-    print clf.classes_
-    return y_submission
-
-def blend_clf(clfs, train, test, label):
+def blend_clf(clfs, data, quiz, label):
     np.random.seed(0) # seed to shuffle the train set
 
     n_folds = 5
     verbose = True
-    shuffle = False
+    shuffle = True
 
-    X, y, X_submission = train, label, test
+    X, y, T = data, label, quiz
 
     if shuffle:
         idx = np.random.permutation(y.size)
@@ -316,27 +270,31 @@ def blend_clf(clfs, train, test, label):
 
     skf = list(StratifiedKFold(y, n_folds))
 
-    print "Creating train and test sets for blending."
+    print "Creating bleding train set and valid set..."
     
     dataset_blend_train = np.zeros((X.shape[0], len(clfs)))
-    dataset_blend_test = np.zeros((X_submission.shape[0], len(clfs)))
+    dataset_blend_test = np.zeros((T.shape[0], len(clfs)))
     
     for j, clf in enumerate(clfs):
         print j, clf
-        dataset_blend_test_j = np.zeros((X_submission.shape[0], len(skf)))
-        for i, (train, test) in enumerate(skf):
+        dataset_blend_test_j = np.zeros((T.shape[0], len(skf)))
+        for i, (train, val) in enumerate(skf):
             print "Fold", i
             X_train = X[train]
             y_train = y[train]
-            X_test = X[test]
-            y_test = y[test]
+            X_val = X[val]
+            y_val = y[val]
+            #train each mode
             clf.fit(X_train, y_train)
-            y_submission = clf.predict_proba(X_test)[:,1]
-            dataset_blend_train[test, j] = y_submission
-            dataset_blend_test_j[:, i] = clf.predict_proba(X_submission)[:,1]
+            #model selection on validation set
+            dataset_blend_train[val, j] = clf.predict_proba(X_val)[:,1]
+            #predict test set for each model
+            dataset_blend_test_j[:, i] = clf.predict_proba(T)[:,1]
+        
         dataset_blend_test[:,j] = dataset_blend_test_j.mean(1)
 
-    print "Blending."
+    print "Blending models by logistic regression..."
+    #Feed output of all models to 2nd layer for logistic regression
     clf = LogisticRegression()
     clf.fit(dataset_blend_train, y)
     predictions = clf.predict(dataset_blend_test)
