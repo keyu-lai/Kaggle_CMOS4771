@@ -159,7 +159,7 @@ def train_bagging_decision_tree(train_data,train_label):
 def train_rf(train_data, train_label):
     pipeline = Pipeline([('clf', RandomForestClassifier(n_estimators=10, max_depth=None,
                                                         min_samples_split=1, random_state=0))])
-    parameters = {'clf__n_estimators': (50,100,200,500),'clf__max_features':('sqrt','log2',None) }
+    parameters = {'clf__n_estimators': (50,100,200),'clf__max_features':('sqrt','log2',None) }
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1,verbose=1, scoring='accuracy')
     grid_search.fit(train_data, train_label)
     print 'Best score: %0.3f' % grid_search.best_score_
@@ -286,10 +286,58 @@ def blend_clf(clfs, data, quiz, label):
     
     return predictions, clf.best_score_
 
+def blend_clf_rf(clfs, data, quiz, label):
+    np.random.seed(0) # seed to shuffle the train set
+
+    n_folds = 5
+    verbose = True
+    shuffle = True
+
+    X, y, T = data, label, quiz
+
+    if shuffle:
+        idx = np.random.permutation(y.size)
+        X = X[idx]
+        y = y[idx]
+
+    skf = list(StratifiedKFold(y, n_folds))
+
+    print "Creating bleding train set and valid set..."
+    
+    dataset_blend_train = np.zeros((X.shape[0], len(clfs)))
+    dataset_blend_test = np.zeros((T.shape[0], len(clfs)))
+    
+    for j, clf in enumerate(clfs):
+        print j, clf
+        dataset_blend_test_j = np.zeros((T.shape[0], len(skf)))
+        for i, (train, val) in enumerate(skf):
+            print "Fold", i
+            X_train = X[train]
+            y_train = y[train]
+            X_val = X[val]
+            y_val = y[val]
+            #train each mode
+            clf.fit(X_train, y_train)
+            #model selection on validation set
+            dataset_blend_train[val, j] = clf.predict_proba(X_val)[:,1]
+            #predict test set for each model
+            dataset_blend_test_j[:, i] = clf.predict_proba(T)[:,1]
+        
+        dataset_blend_test[:,j] = dataset_blend_test_j.mean(1)
+
+    print "Blending models by logistic regression..."
+    #Feed output of all models to 2nd layer for logistic regression
+    clf = train_rf(dataset_blend_train, y)
+    #clf = LogisticRegression(C=0.8, solver='newton-cg', penalty='l2', n_jobs=-1, random_state=678)
+    #clf.fit(dataset_blend_train, y)
+    predictions = clf.predict(dataset_blend_test)
+    
+    return predictions, clf.best_score_
+
 def train_log_reg(train_data,train_label):
     rng = check_random_state(0)
     pipeline = Pipeline([('clf', LogisticRegression(penalty='l2', n_jobs=-1, random_state=678))])
-    parameters = {'clf__C': (0.7, 0.8, 0.9), 'clf__solver' : ('newton-cg','lbfgs','sag')}
+    parameters = {'clf__C': (0.8, 0.9, 1.0, 1.1), 'clf__solver' : ('newton-cg','lbfgs','sag')}
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1,verbose=1, scoring='accuracy')
     grid_search.fit(train_data, train_label)
     print 'Best score: %0.3f' % grid_search.best_score_
