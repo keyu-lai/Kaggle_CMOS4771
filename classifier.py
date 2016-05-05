@@ -284,7 +284,7 @@ def blend_clf(clfs, data, quiz, label):
     #clf.fit(dataset_blend_train, y)
     predictions = clf.predict(dataset_blend_test)
     
-    return predictions
+    return predictions, clf.best_score_
 
 def train_log_reg(train_data,train_label):
     rng = check_random_state(0)
