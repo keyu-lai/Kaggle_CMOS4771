@@ -8,6 +8,7 @@ from sklearn.metrics import classification_report
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cross_validation import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+from xgboost import XGBClassifier 
 
 from classifier import blend_clf, write_out, encode_label
 
@@ -44,23 +45,26 @@ def run_local():
     label = train['label']
     train = train.drop('label',1)
     train = encode(train)
-    X_train, X_test, y_train, y_test = train_test_split(train, label)
+    X_train, X_test, y_train, y_test = train_test_split(train, label, test_size=0.1)
 
-    clfs = [RandomForestClassifier(n_estimators=1000, n_jobs=-1, criterion='gini', random_state=398),
-        RandomForestClassifier(n_estimators=1000, n_jobs=-1, criterion='entropy', random_state=1234),
-        ExtraTreesClassifier(n_estimators=1000, n_jobs=-1, criterion='gini', max_features='sqrt', random_state=312),
-        ExtraTreesClassifier(n_estimators=1000, n_jobs=-1, criterion='entropy', max_features='log2', random_state=12),
-        GradientBoostingClassifier(learning_rate=0.1, subsample=0.5, max_depth=6, n_estimators=50),
-        AdaBoostClassifier(n_estimators=50, learning_rate=0.4),
-        AdaBoostClassifier(n_estimators=50, learning_rate=0.3),
-        BaggingClassifier(DecisionTreeClassifier(), n_jobs=-1,random_state=851,n_estimators=100),
-        BaggingClassifier(DecisionTreeClassifier(), n_jobs=-1,random_state=1556,n_estimators=100),
+    clfs = [RandomForestClassifier(n_estimators=200, n_jobs=-1, criterion='gini', random_state=398, max_features='sqrt'),
+        RandomForestClassifier(n_estimators=200, n_jobs=-1, criterion='entropy', random_state=1234, max_features='sqrt'),
+        RandomForestClassifier(n_estimators=200, n_jobs=-1, criterion='gini', random_state=612, max_features='sqrt'),
+        RandomForestClassifier(n_estimators=200, n_jobs=-1, criterion='entropy', random_state=301, max_features='sqrt'),
+        ExtraTreesClassifier(n_estimators=200, n_jobs=-1, criterion='gini', max_features=None, random_state=312),
+        ExtraTreesClassifier(n_estimators=200, n_jobs=-1, criterion='entropy', max_features=None, random_state=12),
+        XGBClassifier(learning_rate=0.2, max_depth=7, n_estimators=800),
+        AdaBoostClassifier(base_estimator=RandomForestClassifier(n_jobs=-1, n_estimators=10, min_samples_split=1, 
+                                                                 random_state=417), n_estimators=50, learning_rate=0.5),
+        BaggingClassifier(DecisionTreeClassifier(), n_jobs=-1,random_state=851,n_estimators=200),
+        BaggingClassifier(DecisionTreeClassifier(criterion='entropy'), n_jobs=-1,random_state=1556,n_estimators=200),
         DecisionTreeClassifier(criterion='entropy',splitter='best'),
+        KNeighborsClassifier(n_neighbors=1),
+        KNeighborsClassifier(n_neighbors=2),
         KNeighborsClassifier(n_neighbors=3)]
 
-
     predictions = blend_clf(clfs, X_train.as_matrix(),X_test.as_matrix(),y_train.as_matrix())
-    print classification_report(y_test1, predictions,digits=4)
+    print classification_report(y_test, predictions,digits=4)
     
     return None
     
@@ -77,18 +81,19 @@ def score():
 
     X_train, X_test, y_train = train, quiz, label
 
-    clfs = [RandomForestClassifier(n_estimators=1000, n_jobs=-1, criterion='gini', random_state=398),
-        RandomForestClassifier(n_estimators=1000, n_jobs=-1, criterion='entropy', random_state=1234),
-        ExtraTreesClassifier(n_estimators=1000, n_jobs=-1, criterion='gini', max_features='sqrt', random_state=312),
-        ExtraTreesClassifier(n_estimators=1000, n_jobs=-1, criterion='entropy', max_features='log2', random_state=12),
-        GradientBoostingClassifier(learning_rate=0.1, subsample=0.5, max_depth=6, n_estimators=50),
-        AdaBoostClassifier(n_estimators=50, learning_rate=0.4),
-        AdaBoostClassifier(n_estimators=50, learning_rate=0.3),
-        BaggingClassifier(DecisionTreeClassifier(), n_jobs=-1,random_state=851,n_estimators=100),
-        BaggingClassifier(DecisionTreeClassifier(), n_jobs=-1,random_state=1556,n_estimators=100),
+    clfs = [RandomForestClassifier(n_estimators=200, n_jobs=-1, criterion='gini', random_state=398, max_features='sqrt'),
+        RandomForestClassifier(n_estimators=200, n_jobs=-1, criterion='entropy', random_state=1234, max_features='sqrt'),
+        ExtraTreesClassifier(n_estimators=200, n_jobs=-1, criterion='gini', max_features=None, random_state=312),
+        ExtraTreesClassifier(n_estimators=200, n_jobs=-1, criterion='entropy', max_features=None, random_state=12),
+        XGBClassifier(learning_rate=0.2, max_depth=7, n_estimators=800),
+        AdaBoostClassifier(base_estimator=RandomForestClassifier(n_jobs=-1, n_estimators=10, min_samples_split=1, 
+                                                                 random_state=417), n_estimators=50, learning_rate=0.5),
+        BaggingClassifier(DecisionTreeClassifier(), n_jobs=-1,random_state=851,n_estimators=200),
+        BaggingClassifier(DecisionTreeClassifier(criterion='entropy'), n_jobs=-1,random_state=1556,n_estimators=200),
         DecisionTreeClassifier(criterion='entropy',splitter='best'),
+        KNeighborsClassifier(n_neighbors=1),
+        KNeighborsClassifier(n_neighbors=2),
         KNeighborsClassifier(n_neighbors=3)]
-
 
     predictions = blend_clf(clfs, X_train.as_matrix(),X_test.as_matrix(),y_train.as_matrix())
     write_out(predictions,"9stack.txt")

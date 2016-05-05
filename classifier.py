@@ -34,6 +34,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import LabelEncoder
+from xgboost import XGBClassifier
 
 def transform_corpus(train):
     corpus = []
@@ -139,10 +140,10 @@ def train_bagging_decision_tree(train_data,train_label):
     rng = check_random_state(0)
     
     
-    pipeline = Pipeline([('clf', BaggingClassifier(base_estimator=DecisionTreeClassifier(criterion='entropy',max_depth=300),
+    pipeline = Pipeline([('clf', BaggingClassifier(base_estimator=DecisionTreeClassifier(),
                               random_state=rng,n_estimators=100, n_jobs=-1,verbose=1).fit(train_data, train_label))])
         
-    parameters = {'clf__max_samples': (0.1, 0.3, 0.5, 0.7, 1.0)}
+    parameters = {'clf__max_samples': (0.1, 0.3, 0.5, 0.7, 1.0),'clf__n_estimators' : (100,200,300)}
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1,verbose=1, scoring='accuracy')
     grid_search.fit(train_data, train_label)
     print 'Best score: %0.3f' % grid_search.best_score_
@@ -158,7 +159,7 @@ def train_bagging_decision_tree(train_data,train_label):
 def train_rf(train_data, train_label):
     pipeline = Pipeline([('clf', RandomForestClassifier(n_estimators=10, max_depth=None,
                                                         min_samples_split=1, random_state=0))])
-    parameters = {'clf__n_estimators': (100,200),'clf__max_features':('sqrt','log2') }
+    parameters = {'clf__n_estimators': (50,100,200,500),'clf__max_features':('sqrt','log2',None) }
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1,verbose=1, scoring='accuracy')
     grid_search.fit(train_data, train_label)
     print 'Best score: %0.3f' % grid_search.best_score_
@@ -171,7 +172,7 @@ def train_rf(train_data, train_label):
 
 def train_ada_boost(train_data, train_label):
     pipeline = Pipeline([('clf', AdaBoostClassifier())])
-    parameters = {'clf__n_estimators': (200,300,400)}
+    parameters = {'clf__n_estimators': (900,1000,1100),'clf__learning_rate':(1.1,1.2,1.3)}
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1,verbose=1, scoring='accuracy')
     grid_search.fit(train_data, train_label)
     print 'Best score: %0.3f' % grid_search.best_score_
@@ -189,9 +190,9 @@ def voting(train_data,train_label, *clfs):
     
     return vc.fit(train_data, train_label)
 
-def train_friedman_xgbm(train_data, train_label):
-    pipeline = Pipeline([('clf', xgb.XGBClassifier(n_estimators=300,learning_rate=0.1,max_depth=7))])
-    parameters = {}
+def train_xgb(train_data, train_label):
+    pipeline = Pipeline([('clf', XGBClassifier(learning_rate=0.3, max_depth=7, n_estimators=800))])
+    parameters = {'clf__learning_rate' :(0.2 , 0.3, 0.4), 'clf__n_estimators':(800,900)}
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1,verbose=1, scoring='accuracy')
     grid_search.fit(train_data, train_label)
     print 'Best score: %0.3f' % grid_search.best_score_
@@ -203,8 +204,8 @@ def train_friedman_xgbm(train_data, train_label):
     return grid_search
 
 def train_gbc(train_data,train_label):
-    pipeline = Pipeline([('clf', GradientBoostingClassifier(loss='exponent',random_state=0,n_estimators=500,learning_rate=0.05,max_depth=7))])
-    parameters = {}
+    pipeline = Pipeline([('clf', GradientBoostingClassifier(loss='deviance',random_state=0,n_estimators=800,learning_rate=0.3,max_depth=7))])
+    parameters = {'clf__n_estimators':(800,900,1000)}
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1,verbose=1, scoring='accuracy')
     grid_search.fit(train_data, train_label)
     print 'Best score: %0.3f' % grid_search.best_score_
@@ -217,8 +218,8 @@ def train_gbc(train_data,train_label):
 
 def train_xtree_classifer(train_data,train_label):
     pipeline = Pipeline([('clf', 
-                       ExtraTreesClassifier(n_jobs=-1,n_estimators=300,max_depth=None, max_features='log2',random_state=0))])
-    parameters = {'clf__n_estimators':(100,200,300,400,500),'clf__max_features':('log2','sqrt',None)}
+                       ExtraTreesClassifier(n_jobs=-1,n_estimators=300,max_depth=None, max_features='sqrt',random_state=0))])
+    parameters = {'clf__n_estimators':(50, 100,200,300,500,800)}
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1,verbose=1, scoring='accuracy')
     grid_search.fit(train_data, train_label)
     print 'Best score: %0.3f' % grid_search.best_score_
@@ -229,23 +230,6 @@ def train_xtree_classifer(train_data,train_label):
     
     return grid_search
 
-def train_bagging_xtree(train_data,train_label):
-    rng = check_random_state(0)
-    xtree = ExtraTreesClassifier(n_jobs=-1,n_estimators=20,max_depth=None, max_features='sqrt',random_state=0)
-    pipeline = Pipeline([('clf', BaggingClassifier(base_estimator=xtree, random_state=rng,n_estimators=100, 
-                                                   n_jobs=-1,verbose=1).fit(train_data, train_label))])
-    parameters = {'clf__max_samples': (0.5, 0.7, 1.0)}
-    grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1,verbose=1, scoring='accuracy')
-    grid_search.fit(train_data, train_label)
-    print 'Best score: %0.3f' % grid_search.best_score_
-    print 'Best parameters set:' 
-    best_parameters = grid_search.best_estimator_.get_params()
-    for param_name in sorted(parameters.keys()):
-        print '\t%s: %r' % (param_name, best_parameters[param_name])
-    
-    return grid_search
-
-    return bag_clf
 
 def write_out(pv,filename):
     output = [str(i+1) + ',' + str(v) for i,v in enumerate(pv)]
@@ -295,8 +279,23 @@ def blend_clf(clfs, data, quiz, label):
 
     print "Blending models by logistic regression..."
     #Feed output of all models to 2nd layer for logistic regression
-    clf = LogisticRegression()
-    clf.fit(dataset_blend_train, y)
+    clf = train_log_reg(dataset_blend_train, y)
+    #clf = LogisticRegression(C=0.8, solver='newton-cg', penalty='l2', n_jobs=-1, random_state=678)
+    #clf.fit(dataset_blend_train, y)
     predictions = clf.predict(dataset_blend_test)
     
     return predictions
+
+def train_log_reg(train_data,train_label):
+    rng = check_random_state(0)
+    pipeline = Pipeline([('clf', LogisticRegression(penalty='l2', n_jobs=-1, random_state=678))])
+    parameters = {'clf__C': (0.7, 0.8, 0.9), 'clf__solver' : ('newton-cg','lbfgs','sag')}
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1,verbose=1, scoring='accuracy')
+    grid_search.fit(train_data, train_label)
+    print 'Best score: %0.3f' % grid_search.best_score_
+    print 'Best parameters set:' 
+    best_parameters = grid_search.best_estimator_.get_params()
+    for param_name in sorted(parameters.keys()):
+        print '\t%s: %r' % (param_name, best_parameters[param_name])
+    
+    return grid_search
