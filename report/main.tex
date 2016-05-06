@@ -400,7 +400,24 @@ The abstract goes here.
 % creates the second title. It will be ignored for other modes.
 \IEEEpeerreviewmaketitle
 
+\section{Data Processing and Feature design}
+In our experiment, we have tried two feature presentation methods: label encoding and one-hot label encoding.
 
+\subsection{Label Encoding}
+Label encoding assigns an integer to every categorical feature. It's the most simply form of feature representation. However, it assumes that all categories are ordered, which is not always true. For example, in distance-based algorithm such as SVM, it assumes that one feature is farther away from another, which is not always desirable. 
+
+\subsection{One-hot Encoding}
+% http://scikit-learn.org/stable/modules/preprocessing.html#preprocessing
+One-hot encoding is an efficient way to convert represent categorical features. It transforms each categorical feature with $m$ possible values into $m$ binary features, with only the active one as 1 and left the other as 0. 
+\begin{equation}
+\Phi(x) = 
+\begin{bmatrix}
+    0 & \dots & 0 & 1 & 0 & \dots & 0
+\end{bmatrix}^T
+\end{equation}
+\indent This will solve the order problem of label encoding described above. 
+
+\subsection{Performance}
 
 \section{Introduction}
 % no \IEEEPARstart
