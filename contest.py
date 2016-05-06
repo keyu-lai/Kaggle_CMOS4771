@@ -2,6 +2,8 @@ import pandas as pd
 import numpy
 import time
 
+from collections import defaultdict, Counter
+from glob import glob
 from sklearn.ensemble import GradientBoostingClassifier, ExtraTreesClassifier, VotingClassifier, RandomForestClassifier, AdaBoostClassifier, BaggingClassifier, BaggingClassifier
 from sklearn.linear_model import SGDClassifier
 from sklearn.svm import SVC
@@ -9,17 +11,38 @@ from sklearn.metrics import classification_report
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cross_validation import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
-from xgboost import XGBClassifier 
 
 from classifier import blend_clf, write_out, encode_label
+
+def avg_all_models_from_files(infiles, filename):
+    scores = defaultdict(list)
+    with open(filename,"wb") as outfile:
+        weight_list = [1]*len(glob(infiles))
+    
+        for i, ifile in enumerate( glob(infiles) ):
+            print "parsing:", ifile
+            lines = open(ifile).readlines()
+            lines = [lines[0]] + sorted(lines[1:])
+        
+            #write out all model results
+            for idx, line in enumerate( lines ):
+                if i == 0 and idx == 0:
+                    outfile.write(line)
+                    
+                if idx > 0:
+                    row = line.strip().split(",")
+                    for l in range(1,weight_list[i]+1):
+                        scores[(idx,row[0])].append(row[1])
+    
+        #take hard votes
+        for j,k in sorted(scores):
+            outfile.write("%s,%s\n"%(k,Counter(scores[(j,k)]).most_common(1)[0][0]))
+    
+        print("wrote to %s"%outfile)
 
 def prepare_data(df):
     df4 = df
     df1 = pd.DataFrame(df.loc[:,[u'0',u'5',u'7',u'8',u'9',u'14',u'16',u'17',u'56',u'57']])
-    #0 , 26 8, 5 , 14, 23 , 58 -> boss
-    #17, 56, 16,9,, 25, 57 -> yes
-    #20, 18, 7 -> no
-    #df2 = pd.DataFrame(df.loc[:,[u'18',u'20',u'23',u'25',u'26']])
     df2 = pd.DataFrame(df.loc[:,[u'18',u'20',u'23',u'25',u'26',u'58']])
     df3 = pd.DataFrame(df.drop([u'0',u'5',u'7',u'8',u'9',u'14',u'16',u'17',
                           u'18',u'20',u'23',u'25',u'26',u'56',u'57',u'58'],axis=1))
@@ -46,6 +69,7 @@ def run_local():
     label = train['label']
     train = train.drop('label',1)
     train = encode(train)
+
     X_train, X_test, y_train, y_test = train_test_split(train, label, test_size=0.1)
 
     clfs = [RandomForestClassifier(n_estimators=200, n_jobs=-1, criterion='gini', random_state=398, max_features='sqrt'),
@@ -65,9 +89,12 @@ def run_local():
         BaggingClassifier(DecisionTreeClassifier(criterion='entropy'), n_jobs=-1,random_state=1556,n_estimators=200),
         DecisionTreeClassifier(criterion='entropy',splitter='best'),
         DecisionTreeClassifier(criterion='gini',splitter='best'),
-        KNeighborsClassifier(n_neighbors=1)]
+        KNeighborsClassifier(n_neighbors=1),
+        KNeighborsClassifier(n_neighbors=2),
+        KNeighborsClassifier(n_neighbors=3)]
 
-    predictions = blend_clf(clfs, X_train.as_matrix(),X_test.as_matrix(),y_train.as_matrix())
+    predictions, _ = blend_clf(clfs, X_train.as_matrix(),X_test.as_matrix(),y_train.as_matrix())
+    print y_test
     print classification_report(y_test, predictions,digits=4)
     
     return None
@@ -114,4 +141,7 @@ def score():
     return None
 
 if __name__ == "__main__":
-    run_local()
+    #if testing run only then do run_local()
+    #if score quiz then run score()
+    #if produces average file then run avg_all_models_from_files("stack*","pred.txt")
+    score()
