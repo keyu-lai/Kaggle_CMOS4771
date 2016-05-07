@@ -143,5 +143,5 @@ def score():
 if __name__ == "__main__":
     #if testing run only then do run_local()
     #if score quiz then run score()
-    #if produces average file then run avg_all_models_from_files("stack*","pred.txt")
+    #if produces average file then run avg_all_models_from_files("votes/stack*","pred.txt")
     score()
