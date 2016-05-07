@@ -381,7 +381,7 @@ Email: qc2200@columbia.edu}
 \begin{abstract}
 The main purpose of this report is to present our team's Kaggle result, document the competition process and explain our approach to achieve the accuracy score of 0.95667 which placed us in the 2nd position in the Public Leader Board.
 \\ \\
-We will briefly discuss about feature design in the first section, analysis and experiment of classifiers we used in the competition in 2nd section, our final "recipe" of algorithm in the 3rd section, metric performance in the 4th section and end result of quiz set in the last section.
+We will briefly discuss about the feature design in the first section, our analysis and experiments of classifiers we employed in the competition in 2nd section, our final "recipe" of algorithm in the 3rd section, metric performance in the 4th section and end result of quiz set in the last section.
 \end{abstract}
 
 \bigskip
@@ -413,16 +413,16 @@ One-hot encoding is an efficient way to convert represent categorical features. 
 \end{equation}
 \indent This will solve the order problem of label encoding described above. 
 \subsection{Performance}
-We find that one-hot encoding and label encoder are comparable in term of accuracy score when applying with various standard classifiers such as decision tree, k-NN and SVM. However, we notice signifcant running time performance with label encoder. It makes sense since label encoder maintains only 52 features while one-hot encoder creates more than 1500+ features! \\ \\
-On the other not all the features are equally important. The below is extracted from extra tree classifier internal property. As you observe, features 27-55 are virtually nonessential in this classifier decision. Nevertheless, we notice no performance gain after dropping off these extra features while keeping these features permits us to sustain about 0.1\% more accuracy which is more than enough to differentiate ranking in the competition, so we decide to utilize all features. 
+We find that one-hot encoding and label encoder are comparable in term of accuracy score when using together with various standard classifiers such as decision tree, k-NN and SVM. However, we notice much faster running time with label encoder. It makes sense since label encoder maintains only 52 features while one-hot encoder creates more than 1500+ features! \\ \\
+On the other hand, not every the feature is equally important. The illustration in the below is extracted from one extra tree classifier internal property. As you observe, features 27-55 are virtually nonessential in this classifier decision. Theoretically, we can drop them to gain better execution speed. Nevertheless, we notice no runtime  improvement after removing these extra features while keeping them permits us to sustain about 0.1\% more accuracy that is more than enough to differentiate ranking in the competition, so we decide to utilize all features. 
 \\
 \includegraphics[scale=0.45]{report1.png}
 
 \newcommand{\vh}{\mathbf{h}}
 
 \section{Model Description}
-We begin our investigation by testing our favorite classifiers, SVM and SGD. However, they did not perform very well in this dataset (80\% vs 76\%) and the class benchmark is 90\%. On the second look at the dataset description and our feature design, we find out why. Firstly, we use label encoder to encode categorical variables, and so we have removed concept of distance from the most important features of the data. Secondly, most of feaures deal with some sorts of syntatic structures which are rule-based by nature. As such, we suspect that non-linear classifier like decision tree or ensemble of trees may perform best. \\ \\
-In the proceeding, we will discuss in length about multiple classifiers we use to achieve great performance. As expected, the ensemble of trees accomplish superior performance($> 94$\%). In order to boost our score further, we take the concept of ensembling to the extreme by employing a variation of ensemble blending popularized in Netflix Grand Prize competition.
+We began our investigation by testing our favorite classifiers, SVM and SGD. However, they did not perform very well in this dataset (80\% vs 76\%) and the class benchmark is 90\%. On the second look at the dataset description and our feature design, we found out why. Firstly, we used label encoder to encode categorical variables, and so we have effectively removed the concept of distance from the most important features of the dataset. Secondly, most of features dealt with some sorts of syntatic structures which are rule-based by nature. As such, we suspected that non-linear classifier like decision tree or ensemble of trees might perform best. \\ \\
+In the proceeding, we will discuss in length about multiple classifiers we used to achieve great performance. As expected, the ensemble of trees accomplished superior performance($> 94$\%). In order to boost our score further, we took the concept of ensembling to the extreme by employing a variation of ensemble blending alogrithm popularized by Netflix Grand Prize competition.
 
 \subsection{K Nearest Neighbors}
 The KNN algorithm tries to directly approximate the decision boundaries of $f$. It computes the $k$, which is also one of the model parameter, training points that are closest to $x$ based on Euclidean distance, then returns the purality of the labels of these $k$ points as the prediction result for this sample $x$. KNN is a type of instance-based learning, or lazy learning, where the function is only approximated locally and all computation is deferred until classification.
@@ -458,7 +458,7 @@ Random Forest is a kind of boosting algorithm, which combines a lot of weak clas
 \end{enumerate}
 
 \subsection{Extra tree}
-Extra trees algorithm is a variance of random forest. The difference is that random forest choosing the most discriminative thresholds from the random subset of candidate features, while extra trees randomly select some thresholds and choose pick the best one as the splitting rule.
+Extra trees algorithm is a variation of random forest. The difference is that random forest choosing the most discriminative thresholds from the random subset of candidate features, while extra trees randomly select some thresholds and pick the best one as the splitting rule.
 
 \subsection{Gradient Tree Boosting}
 % http://scikit-learn.org/stable/modules/ensemble.html
@@ -481,28 +481,28 @@ Where the step length $\gamma_m$ is
 \end{equation}
 
 \subsection{Adaboost}
-The core idea of Adaboost algorithm is to learn a lot of weak classifiers aw subset of the data. Then we assign a weight to each classifier and combine the weighted majority vote to produce the final prediction. \\ \\
+The core idea of Adaboost algorithm is to learn a lot of weak classifiers with subset of the data. Then we assign a weight to each classifier and combine the weighted majority vote to produce the final prediction. \\ \\
 For this competition, we choose random forest and extra trees to be the "weak" classifier of Adaboost. 
 
 \subsection{Bagging method}
-bagging method takes several instances of a base estimator and produces random subsets of the training set to train each base estimator. At last, it takes the individual predictions of the base estimators and form a final prediction. \\ \\
+Bagging method takes several instances of a base estimator and produces random subsets of the training set to train each base estimator. At last, it takes the individual predictions of the base estimators and form the final prediction. \\ \\
 In our implementation, we used random forest, extra trees and decision tree as the base estimators and fed the three models to the next layer.  
 
 \subsection{3-Layer Ensemble Blending}
-As mentioned in previous subsections, algorithms which employ ensemble mechanism such boosting or bagging perform really well. However, they all seem to hit a plateau around $94.5\%$ accuracy score. Similar to boosting technique, an intuitive idea is to find a way to make these great performers to work together in hope of achieving stellar score. \\ \\
+As mentioned in previous subsections, algorithms which employ ensembling mechanism such boosting or bagging perform really well. However, they all seem to hit a plateau around $94.5\%$ accuracy score. Similar to boosting technique, an intuitive idea is to find a way to make these great performers to work together in hope of achieving stellar score. \\ \\
 Inspired by blending algorithms popularized by Netflix competition and Neural Network, we introduce 3-layer blending algorithm.
 \\
 \begin{itemize}
-\item \textbf{Layer 1: Online training} In this layer, we collect an ensemble of high achievers consisting of 2 random forest classifiers, 2 extra tree classifiers, one gradient boosting machine classifier, one AdaBoost of random forest, one AdaBoost of extra tree classifier, one bagging classifier of random forest, one bagging classifier of extra tree classifier, one bagging classifier of a simple decision tree, 2 decision tree classifiers and 3 kNN classifiers. Each is trained over the dataset multiple times by using 5-fold cross validation and output the average of probablistic predictions. Then, their results are combined together as a new dataset where each column feature representing one particular model mean probabilistic guesses and each row is an data example.
-\item \textbf{Layer 2: Online Logistic Regression} inspired by Neural Network structure, we use logistic regression in the 2nd layer to regress layer 1 probablistic guesses into the final answers. We compute the 3-fold cross validation score and save output to a file.
-\item \textbf{Layer 3: Offline aggregating} Over the course of the competition, we have trained literally dozen of models, some have very high cross validation score. By choosing only one best model, we lose most of our efforts doing extensive model experimentation in last couple of weeks and be unfair to marginally worse models. As such, we come up with offline hard voting scheme where we load all quiz prediction files with high internal cross validation score and aggregate them all together by using majority voting scheme.
+\item \textbf{Layer 1: Online training} In this layer, we collect an ensemble of high achievers consisting of 2 random forest classifiers, 2 extra tree classifiers, one gradient boosting machine classifier, one AdaBoost of random forest, one AdaBoost of extra tree classifier, one bagging classifier of random forest, one bagging classifier of extra tree classifier, one bagging classifier of a simple decision tree, 2 decision tree classifiers and 3 kNN classifiers. Each is trained over the dataset multiple times using 5-fold cross validation and everyone outputs the mean of their "soft" predictions (probability) rather than hard predictions (classes). Then, their results are combined together as a new dataset where each column representing one specific model guesses and each row is a data example.
+\item \textbf{Layer 2: Online Logistic Regression} inspired by Neural Network structrure, we use logistic regression in the 2nd layer to regress layer 1 probablistic guesses into the final "hard" predictions. In addition, we also compute the 3-fold cross validation score and save predictions and cv score to a file.
+\item \textbf{Layer 3: Offline aggregating} Over the course of the competition, we have trained literally dozen of models, some have very high cross validation score. By choosing only one best model, we lose most of our efforts doing extensive model experimentation in last couple of weeks and be unfair to only marginally worse models. As such, we come up with offline hard voting scheme where we load all quiz prediction files with high internal cross validation score and aggregate them all together by using majority voting scheme.
 \end{itemize}
 
 
 \section{Model Selection}
 To select the best parameters, we uses 3-fold cross validation. The k-fold cross validation procedure is as followed:
 \begin{enumerate}
-\item Splited the data into K parts.
+\item Split the data into K parts.
 \item For each value of \(\vh\): 
 \begin{itemize}
 \item For each \(k \in {1,2,\dots,K}\)
@@ -514,19 +514,19 @@ To select the best parameters, we uses 3-fold cross validation. The k-fold cross
 \end{itemize}
 \item Select the value \(\hat{\vh}\) with lowest cross-validation error.
 \end{enumerate}
-\indent Cross validation is used to tune the parameters for each algorithms listed above. Then we choose the models with the fair performance and feed them into the blending algorithm to see if they contribute to the final result. At last, we choose a combination of model that produce the best result. 
+\indent Cross validation is used to tune the parameters for each algorithms listed above. Then we choose the models with the fair performance and feed them into the blending algorithm to see if they contribute to the final result. At last, we choose a combination of models that produce the best result. 
 
 \section{Predictor Evaluation}
-In the begining, we tend to base our algorithm decision on the Kaggle Public Leaderboard score. However, we quickly realize that it is not a good idea. By doing so, we are exposed ourselves to chance of overfiitng the public leaderboard and spend unproductive time twisting parameters to gain minimal gain. \\ \\
-Gradually, we learn to trust our local cross validation procedure, by using sklearn GridSearchCV to tune paremeters, we are able to combine the task of tuning parameters with the quest of searching for a high cross validation score. We discover that there is a high correlation between hiking local cross validation score and boosting public leaderboard score.
+In the beginning, we tended to base our algorithm decision on the Kaggle Public Leaderboard score. However, we quickly realized that it was not a good idea. By doing so, we are exposed ourselves to chances of overfitting the public leaderboard and prone to spending unproductive time twisting parameters to gain only minimal gain. \\ \\
+Gradually, we learn to trust our local cross validation. By using sklearn GridSearchCV to tune paremeters, we are able to combine the task of tuning parameters with the quest of searching for a high cross validation score model. We discover that there is a high correlation between hiking the local cross validation score and boosting the public leaderboard score.
 
 \section{Result of evaluation and analysis}
-By spending many hours exploring and experiment, we are able to come up with the 3-layer algorithm discussed in \textbf{Model Description}. The algorithm is able to accomplish 95.667\% accuracy in the Kaggle Public Leaderboard and attain around 95.27\% local 3-fold cross validation score. As you can see there is a slight disprepancy between local cv score and leaderboard score. This reflects our bias of trying to submit the results that increases the leaderboard ranking. However, the disprepancy is small enough to be negligible.
+By spending many hours exploring and experimenting, we are able to come up with the 3-layer algorithm discussed in \textbf{Model Description}. The algorithm is able to accomplish 95.667\% accuracy in the Kaggle Public Leaderboard and attain around 95.27\% local 3-fold cross validation score. As you can see there is a slight disprepancy between local cv score and leaderboard score. This reflects our bias of trying to submit the results that increase the leaderboard ranking. However, the disprepancy is small enough to be negligible.
 % conference papers do not normally have an appendix
 
 \section{Individual Contributions}
 \subsection{Bach Viet Do}
-Designed the whole architecture of the program and worked on parameters tuning; Contributed to the report writing. 
+Designed the whole architecture of predictive algorithms and worked on parameters tuning; Contributed to the report writing. 
 \subsection{Keyu Lai}
 Tested the performances of different algorithm and worked on parameters tuning; Contributed to the report writing. 
 \subsection{Qianyuan Chen}
@@ -534,7 +534,7 @@ Experimented with different features selection and classificiton algorithms; Con
 
 % use section* for acknowledgment
 \section*{Acknowledgment}
-We would like to thank the instructor Satyen Kale and COMS4771 teaching staff for putting together a well thought competition to stimulate us to apply machine learning theory into practice.
+We would like to thank the instructor Satyen Kale and COMS4771 teaching staff for putting together a well -hought competition to stimulate us to apply machine learning theory into practice.
 
 
 
