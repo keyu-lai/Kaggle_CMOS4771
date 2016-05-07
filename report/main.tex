@@ -58,7 +58,7 @@
 % If IEEEtran.cls has not been installed into the LaTeX system files,
 % manually specify the path to it like:
 % \documentclass[conference]{../sty/IEEEtran}
-
+\usepackage{graphicx}
 
 
 
@@ -290,8 +290,6 @@
 % http://www.ctan.org/pkg/dblfloatfix
 
 
-
-
 % *** PDF, URL AND HYPERLINK PACKAGES ***
 %
 %\usepackage{url}
@@ -322,28 +320,27 @@
 % not capitalized unless they are the first or last word of the title.
 % Linebreaks \\ can be used within to get better formatting as desired.
 % Do not put math or special symbols in the title.
-\title{Bare Demo of IEEEtran.cls\\ for IEEE Conferences}
+\title{COMS 4771 Kaggle Competition Report\\ from Deus Ex Machina Team}
 
 
 % author names and affiliations
 % use a multiple column layout for up to three different
 % affiliations
-\author{\IEEEauthorblockN{Bach Viet Do}
-\IEEEauthorblockA{School of Electrical and\\Computer Engineering\\
-Georgia Institute of Technology\\
-Atlanta, Georgia 30332--0250\\
-Email: http://www.michaelshell.org/contact.html}
+\author{\IEEEauthorblockN{BachViet Do}
+\IEEEauthorblockA{Computer Science, Columbia University\\
+Kaggle Id: machinescholar \\
+Email: bd2444@columbia.edu}
 \and
 \IEEEauthorblockN{Keyu Lai}
-\IEEEauthorblockA{Twentieth Century Fox\\
-Springfield, USA\\
-Email: homer@thesimpsons.com}
+\IEEEauthorblockA{Computer Science, Columbia University \\
+Kaggle Id : keyu.lai \\
+Email: kl2844@columbia.edu}
 \and
 \IEEEauthorblockN{Qianyuan Chen}
-\IEEEauthorblockA{Starfleet Academy\\
-San Francisco, California 96678--2391\\
-Telephone: (800) 555--1212\\
-Fax: (888) 555--1212}}
+\IEEEauthorblockA{Computer Science, Columbia University\\
+Kaggle Id: RoyChen \\
+Email: qc2200@columbia.edu}
+}
 
 % conference papers do not typically use \thanks and this command
 % is locked out in conference mode. If really needed, such as for
@@ -382,14 +379,13 @@ Fax: (888) 555--1212}}
 % As a general rule, do not put math, special symbols or citations
 % in the abstract
 \begin{abstract}
-The abstract goes here.
+The main purpose of this report is to present our team's Kaggle result, document the competition process and explain our approach to achieve the accuracy score of 0.95667 which placed us in the 2nd position in the Public Leader Board.
+\\ \\
+We will briefly discuss about feature design in the first section, analysis and experiment of classifiers we used in the competition in 2nd section, our final "recipe" of algorithm in the 3rd section, metric performance in the 4th section and end result of quiz set in the last section.
 \end{abstract}
 
+\bigskip
 % no keywords
-
-
-
-
 % For peer review papers, you can put extra information on the cover
 % page as needed:
 % \ifCLASSOPTIONpeerreview
@@ -416,127 +412,17 @@ One-hot encoding is an efficient way to convert represent categorical features. 
 \end{bmatrix}^T
 \end{equation}
 \indent This will solve the order problem of label encoding described above. 
-
 \subsection{Performance}
+We find that one-hot encoding and label encoder are comparable in term of accuracy score when applying with various standard classifiers such as decision tree, k-NN and SVM. However, we notice signifcant running time performance with label encoder. It makes sense since label encoder maintains only 52 features while one-hot encoder creates more than 1500+ features! \\ \\
+On the other not all the features are equally important. The below is extracted from extra tree classifier internal property. As you observe, features 27-55 are virtually nonessential in this classifier decision. Nevertheless, we notice no performance gain after dropping off these extra features while keeping these features permits us to sustain about 0.1\% more accuracy which is more than enough to differentiate ranking in the competition, so we decide to utilize all features. 
+\\
+\includegraphics[scale=0.45]{report1.png}
 
-\section{Introduction}
-% no \IEEEPARstart
-This demo file is intended to serve as a ``starter file''
-for IEEE conference papers produced under \LaTeX\ using
-IEEEtran.cls version 1.8b and later.
-% You must have at least 2 lines in the paragraph with the drop letter
-% (should never be an issue)
-I wish you the best of success.
+\newcommand{\vh}{\mathbf{h}}
 
-\hfill mds
- 
-\hfill August 26, 2015
-
-\subsection{Subsection Heading Here}
-Subsection text here.
-
-
-\subsubsection{Subsubsection Heading Here}
-Subsubsection text here.
-
-
-% An example of a floating figure using the graphicx package.
-% Note that \label must occur AFTER (or within) \caption.
-% For figures, \caption should occur after the \includegraphics.
-% Note that IEEEtran v1.7 and later has special internal code that
-% is designed to preserve the operation of \label within \caption
-% even when the captionsoff option is in effect. However, because
-% of issues like this, it may be the safest practice to put all your
-% \label just after \caption rather than within \caption{}.
-%
-% Reminder: the "draftcls" or "draftclsnofoot", not "draft", class
-% option should be used if it is desired that the figures are to be
-% displayed while in draft mode.
-%
-%\begin{figure}[!t]
-%\centering
-%\includegraphics[width=2.5in]{myfigure}
-% where an .eps filename suffix will be assumed under latex, 
-% and a .pdf suffix will be assumed for pdflatex; or what has been declared
-% via \DeclareGraphicsExtensions.
-%\caption{Simulation results for the network.}
-%\label{fig_sim}
-%\end{figure}
-
-% Note that the IEEE typically puts floats only at the top, even when this
-% results in a large percentage of a column being occupied by floats.
-
-
-% An example of a double column floating figure using two subfigures.
-% (The subfig.sty package must be loaded for this to work.)
-% The subfigure \label commands are set within each subfloat command,
-% and the \label for the overall figure must come after \caption.
-% \hfil is used as a separator to get equal spacing.
-% Watch out that the combined width of all the subfigures on a 
-% line do not exceed the text width or a line break will occur.
-%
-%\begin{figure*}[!t]
-%\centering
-%\subfloat[Case I]{\includegraphics[width=2.5in]{box}%
-%\label{fig_first_case}}
-%\hfil
-%\subfloat[Case II]{\includegraphics[width=2.5in]{box}%
-%\label{fig_second_case}}
-%\caption{Simulation results for the network.}
-%\label{fig_sim}
-%\end{figure*}
-%
-% Note that often IEEE papers with subfigures do not employ subfigure
-% captions (using the optional argument to \subfloat[]), but instead will
-% reference/describe all of them (a), (b), etc., within the main caption.
-% Be aware that for subfig.sty to generate the (a), (b), etc., subfigure
-% labels, the optional argument to \subfloat must be present. If a
-% subcaption is not desired, just leave its contents blank,
-% e.g., \subfloat[].
-
-
-% An example of a floating table. Note that, for IEEE style tables, the
-% \caption command should come BEFORE the table and, given that table
-% captions serve much like titles, are usually capitalized except for words
-% such as a, an, and, as, at, but, by, for, in, nor, of, on, or, the, to
-% and up, which are usually not capitalized unless they are the first or
-% last word of the caption. Table text will default to \footnotesize as
-% the IEEE normally uses this smaller font for tables.
-% The \label must come after \caption as always.
-%
-%\begin{table}[!t]
-%% increase table row spacing, adjust to taste
-%\renewcommand{\arraystretch}{1.3}
-% if using array.sty, it might be a good idea to tweak the value of
-% \extrarowheight as needed to properly center the text within the cells
-%\caption{An Example of a Table}
-%\label{table_example}
-%\centering
-%% Some packages, such as MDW tools, offer better commands for making tables
-%% than the plain LaTeX2e tabular which is used here.
-%\begin{tabular}{|c||c|}
-%\hline
-%One & Two\\
-%\hline
-%Three & Four\\
-%\hline
-%\end{tabular}
-%\end{table}
-
-
-% Note that the IEEE does not put floats in the very first column
-% - or typically anywhere on the first page for that matter. Also,
-% in-text middle ("here") positioning is typically not used, but it
-% is allowed and encouraged for Computer Society conferences (but
-% not Computer Society journals). Most IEEE journals/conferences use
-% top floats exclusively. 
-% Note that, LaTeX2e, unlike IEEE journals/conferences, places
-% footnotes above bottom floats. This can be corrected via the
-% \fnbelowfloat command of the stfloats package.
-
-
-\section{Classification Algorithm}
-In this part we have tried different classification algorithms and they all achieve fair performances as a single classifier. To boost the performance, we train each model independently and implement an blending algorithm to combine them. In this section, we will briefly introduce the each algorithm and the blending algorithm we created.
+\section{Model Description}
+We begin our investigation by testing our favorite classifiers, SVM and SGD. However, they did not perform very well in this dataset (80\% vs 76\%) and the class benchmark is 90\%. On the second look at the dataset description and our feature design, we find out why. Firstly, we use label encoder to encode categorical variables, and so we have removed concept of distance from the most important features of the data. Secondly, most of feaures deal with some sorts of syntatic structures which are rule-based by nature. As such, we suspect that non-linear classifier like decision tree or ensemble of trees may perform best. \\ \\
+In the proceeding, we will discuss in length about multiple classifiers we use to achieve great performance. As expected, the ensemble of trees accomplish superior performance($> 94$\%). In order to boost our score further, we take the concept of ensembling to the extreme by employing a variation of ensemble blending popularized in Netflix Grand Prize competition.
 
 \subsection{K Nearest Neighbors}
 The KNN algorithm tries to directly approximate the decision boundaries of $f^*$. It computes the $k$ training points that are closest to $x$ based on Euclidean distance and return the purality of the labels of these $k$ points as the label of $x$.
@@ -598,6 +484,17 @@ Where the step length $\gamma_m$ is
 The core idea of Adaboost algorithm is to learn a lot of weak classifiers aw subset of the data. Then we assign a weight to each classifier and combine the weighted majority vote to produce the final prediction. \\
 For this competition, we choose random forest and extra trees to be the "weak" classifier of Adaboost. 
 
+\subsection{3-Layer Ensemble Blending}
+As mentioned in previous subsections, algorithms which employ ensemble mechanism such boosting or bagging perform really well. However, they all seem to hit a plateau around $94.5\%$ accuracy score. Similar to boosting technique, an intuitive idea is to find a way to make these great performers to work together in hope of achieving stellar score. \\ \\
+Inspired by blending algorithms popularized by Netflix competition and Neural Network, we introduce 3-layer blending algorithm.
+\\
+\begin{itemize}
+\item \textbf{Layer 1: Online training} In this layer, we collect an ensemble of high achievers consisting of 2 random forest classifiers, 2 extra tree classifiers, one gradient boosting machine classifier, one AdaBoost of random forest, one AdaBoost of extra tree classifier, one bagging classifier of random forest, one bagging classifier of extra tree classifier, one bagging classifier of a simple decision tree, 2 decision tree classifiers and 3 kNN classifiers. Each is trained over the dataset multiple times by using 5-fold cross validation and output the average of probablistic predictions. Then, their results are combined together as a new dataset where each column feature representing one particular model mean probabilistic guesses and each row is an data example.
+\item \textbf{Layer 2: Online Logistic Regression} inspired by Neural Network structure, we use logistic regression in the 2nd layer to regress layer 1 probablistic guesses into the final answers. We compute the 3-fold cross validation score and save output to a file.
+\item \textbf{Layer 3: Offline aggregating} Over the course of the competition, we have trained literally dozen of models, some have very high cross validation score. By choosing only one best model, we lose most of our efforts doing extensive model experimentation in last couple of weeks and be unfair to marginally worse models. As such, we come up with offline hard voting scheme where we load all quiz prediction files with high internal cross validation score and aggregate them all together by using majority voting scheme.
+\end{itemize}
+
+
 \section{Model Selection}
 To select the best parameters, we uses 3-fold cross validation. The k-fold cross validation procedure is as followed:
 \begin{enumerate}
@@ -615,20 +512,18 @@ To select the best parameters, we uses 3-fold cross validation. The k-fold cross
 \end{enumerate}
 \indent Cross validation is used to tune the parameters for each algorithms listed above. Then we choose the models with the fair performance and feed them into the blending algorithm to see if they contribute to the final result. At last, we choose a combination of model that produce the best result. 
 
-\section{Conclusion}
-The conclusion goes here.
+\section{Predictor Evaluation}
+In the begining, we tend to base our algorithm decision on the Kaggle Public Leaderboard score. However, we quickly realize that it is not a good idea. By doing so, we are exposed ourselves to chance of overfiitng the public leaderboard and spend unproductive time twisting parameters to gain minimal gain. \\ \\
+Gradually, we learn to trust our local cross validation procedure, by using sklearn GridSearchCV to tune paremeters, we are able to combine the task of tuning parameters with the quest of searching for a high cross validation score. We discover that there is a high correlation between hiking local cross validation score and boosting public leaderboard score.
 
-
-
-
+\section{Result of evaluation and analysis}
+By spending many hours exploring and experiment, we are able to come up with the 3-layer algorithm discussed in \textbf{Model Description}. The algorithm is able to accomplish 95.667\% accuracy in the Kaggle Public Leaderboard and attain around 95.27\% local 3-fold cross validation score. As you can see there is a slight disprepancy between local cv score and leaderboard score. This reflects our bias of trying to submit the results that increases the leaderboard ranking. However, the disprepancy is small enough to be negligible.
 % conference papers do not normally have an appendix
 
 
 % use section* for acknowledgment
 \section*{Acknowledgment}
-
-
-The authors would like to thank...
+We would like to thank the instructor Satyen Kale and COMS4771 teaching staff for putting together a well thought competition to stimulate us to apply machine learning theory into practice.
 
 
 
@@ -661,9 +556,9 @@ The authors would like to thank...
 \bibitem{IEEEhowto:kopka}
 H.~Kopka and P.~W. Daly, \emph{A Guide to \LaTeX}, 3rd~ed.\hskip 1em plus
   0.5em minus 0.4em\relax Harlow, England: Addison-Wesley, 1999.
-
+\bibitem{IEEEhowto:kopka}
+Andreas Taoscher and Michael Jahrer , The Big Chaos Solution to the Netfix Grand Prize“ 
 \end{thebibliography}
-
 
 
 
